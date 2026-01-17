@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💖</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: #000;
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s;
+        }
+        
+        /* Heart Container */
+        #heartContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        
+        /* Các loại trái tim */
+        .heart {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0;
+            animation: floatUp linear forwards;
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+        
+        .heart-basic {
+            color: #ff69b4;
+        }
+        
+        .heart-spin {
+            color: #ff8cc3;
+            animation: floatUpSpin linear forwards;
+        }
+        
+        .heart-twinkle {
+            color: #ff33cc;
+            animation: floatUpTwinkle linear forwards;
+        }
+        
+        .heart-big {
+            color: #ff66cc;
+            font-size: 50px !important;
+        }
+        
+        .heart-small {
+            color: #ff99cc;
+            font-size: 20px !important;
+        }
+        
+        @keyframes floatUp {
+            to {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 0.7;
+            }
+        }
+        
+        @keyframes floatUpSpin {
+            to {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0.7;
+            }
+        }
+        
+        @keyframes floatUpTwinkle {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 0.3; }
+            to {
+                transform: translateY(-100vh) rotate(360deg);
+            }
+        }
+        
+        /* Heart Explosion */
+        .heart-explosion {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .burst-heart {
+            position: absolute;
+            opacity: 0;
+            animation: burstOut linear forwards;
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+        
+        @keyframes burstOut {
+            0% {
+                transform: translate(0, 0) scale(0);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1);
+                opacity: 0.6;
+            }
+        }
+        
+        /* Touch Effect */
+        .touch-effect {
+            position: fixed;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 105, 180, 0.4) 0%, rgba(255, 105, 180, 0) 70%);
+            pointer-events: none;
+            z-index: 5;
+            transform: translate(-50%, -50%);
+            animation: touchEffect 0.6s ease-out forwards;
+        }
+        
+        @keyframes touchEffect {
+            0% { width: 0; height: 0; opacity: 0.8; }
+            100% { width: 120px; height: 120px; opacity: 0; }
+        }
+        
+        /* Background Hearts */
+        .bg-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .bg-heart {
+            position: absolute;
+            opacity: 0.1;
+            animation: bgFloat 20s linear infinite;
+        }
+        
+        @keyframes bgFloat {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0.1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0.1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen"></div>
+    
+    <div id="heartContainer"></div>
+    
+    <div class="bg-hearts" id="bgHearts"></div>
+    
+    <div class="heart-explosion" id="heartExplosion"></div>
+
+    <audio id="myVoice" preload="auto">
+        <source src="voice.m4a" type="audio/mp4">
+        <source src="voice.mp3" type="audio/mpeg">
+        <source src="voice.ogg" type="audio/ogg">
+        <source src="voice.wav" type="audio/wav">
+    </audio>
+
+    <script>
+        const startScreen = document.getElementById('startScreen');
+        const heartContainer = document.getElementById('heartContainer');
+        const bgHearts = document.getElementById('bgHearts');
+        const heartExplosion = document.getElementById('heartExplosion');
+        const myVoice = document.getElementById('myVoice');
+        
+        let isStarted = false;
+        let touchCount = 0;
+        
+        const pinkColors = [
+            '#ff69b4', '#ff8cc3', '#ff33cc', 
+            '#ff66cc', '#ff3399', '#ff99cc'
+        ];
+        
+        function createBackgroundHearts() {
+            for (let i = 0; i < 20; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'bg-heart';
+                heart.innerHTML = '❤️';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.top = Math.random() * 100 + 'vh';
+                heart.style.fontSize = (Math.random() * 30 + 20) + 'px';
+                heart.style.color = pinkColors[Math.floor(Math.random() * pinkColors.length)];
+                heart.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                heart.style.animationDelay = Math.random() * 5 + 's';
+                
+                bgHearts.appendChild(heart);
+            }
+        }
+        
+        function createTouchEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'touch-effect';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            
+            document.body.appendChild(effect);
+            
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    document.body.removeChild(effect);
+                }
+            }, 600);
+        }
+        
+        function createFallingHeart(x, y, type = 'basic') {
+            const heart = document.createElement('div');
+            heart.className = 'heart ' + type;
+            heart.innerHTML = '❤️';
+            
+            heart.style.left = x + 'px';
+            heart.style.top = y + 'px';
+            
+            const color = pinkColors[Math.floor(Math.random() * pinkColors.length)];
+            heart.style.color = color;
+            
+            const size = Math.random() * 40 + 25;
+            heart.style.fontSize = size + 'px';
+            
+            const duration = Math.random() * 3 + 4;
+            heart.style.animationDuration = duration + 's';
+            
+            heartContainer.appendChild(heart);
+            
+            setTimeout(() => {
+                heart.style.opacity = '1';
+            }, 10);
+            
+            setTimeout(() => {
+                if (heart.parentNode) {
+                    heartContainer.removeChild(heart);
+                }
+            }, duration * 1000);
+            
+            return heart;
+        }
+        
+        function createHeartExplosion(x, y, count = 20) {
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('div');
+                    heart.className = 'burst-heart';
+                    heart.innerHTML = '❤️';
+                    
+                    heart.style.left = x + 'px';
+                    heart.style.top = y + 'px';
+                    
+                    const color = pinkColors[Math.floor(Math.random() * pinkColors.length)];
+                    heart.style.color = color;
+                    
+                    const size = Math.random() * 30 + 20;
+                    heart.style.fontSize = size + 'px';
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 200 + 100;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+                    
+                    heart.style.setProperty('--tx', `${tx}px`);
+                    heart.style.setProperty('--ty', `${ty}px`);
+                    
+                    const duration = Math.random() * 0.8 + 0.5;
+                    heart.style.animationDuration = `${duration}s`;
+                    
+                    heartExplosion.appendChild(heart);
+                    
+                    setTimeout(() => {
+                        heart.style.opacity = '1';
+                    }, 10);
+                    
+                    setTimeout(() => {
+                        if (heart.parentNode) {
+                            heartExplosion.removeChild(heart);
+                        }
+                    }, duration * 1000);
+                }, i * 50);
+            }
+        }
+        
+        function createMultipleHearts(x, y) {
+            touchCount++;
+            
+            createTouchEffect(x, y);
+            
+            createFallingHeart(x, y, 'heart-basic');
+            createFallingHeart(x + 30, y, 'heart-spin');
+            createFallingHeart(x - 30, y, 'heart-twinkle');
+            createFallingHeart(x + 15, y - 15, 'heart-big');
+            createFallingHeart(x - 15, y + 15, 'heart-small');
+            
+            if (touchCount % 5 === 0) {
+                createHeartExplosion(x, y, 15);
+            }
+        }
+        
+        function playVoice() {
+            try {
+                myVoice.volume = 0.8;
+                myVoice.currentTime = 0;
+                
+                const playPromise = myVoice.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Audio play error:", error);
+                    });
+                }
+            } catch (error) {
+                console.log("Audio error:", error);
+            }
+        }
+        
+        function startExperience() {
+            if (isStarted) return;
+            
+            isStarted = true;
+            
+            startScreen.style.opacity = '0';
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+            }, 1000);
+            
+            heartContainer.style.display = 'block';
+            
+            createBackgroundHearts();
+            playVoice();
+            
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * window.innerWidth;
+                    const y = window.innerHeight + 50;
+                    createFallingHeart(x, y, 'heart-spin');
+                }, i * 100);
+            }
+        }
+        
+        startScreen.addEventListener('click', function(e) {
+            startExperience();
+            createMultipleHearts(e.clientX, e.clientY);
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (!isStarted) return;
+            createMultipleHearts(e.clientX, e.clientY);
+        });
+        
+        document.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            
+            if (!isStarted) {
+                startExperience();
+                createMultipleHearts(touch.clientX, touch.clientY);
+            } else {
+                createMultipleHearts(touch.clientX, touch.clientY);
+            }
+        });
+        
+        setInterval(() => {
+            if (isStarted && Math.random() > 0.7) {
+                const x = Math.random() * window.innerWidth;
+                const y = window.innerHeight + 50;
+                createFallingHeart(x, y, 'heart-twinkle');
+            }
+        }, 1000);
+        
+        window.addEventListener('resize', function() {
+            while (bgHearts.firstChild) {
+                bgHearts.removeChild(bgHearts.firstChild);
+            }
+            createBackgroundHearts();
+        });
+    </script>
+</body>
+</html>
